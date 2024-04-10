@@ -1,0 +1,22 @@
+{
+  "name": "xtasker",
+  "version": "0.1.0",
+  "description": "Manage your tasks without leaving your cli.",
+  "main": "tasker.js",
+  "bin": {
+    "xtasker": "./cli.js"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": ["todo","tasker","nodejs","cli"],
+  "author": "Tareq Hossain",
+  "repository":{
+    "type":"git",
+    "url": "https://github.com/xtareq/xtasker"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}
