@@ -1,7 +1,7 @@
 /**
- *@description powerful todo app for cli lover
+ *@description powerful cli task management app
  *@author Tareq Hossain
- *@external https://github.com/xtareq/tasker
+ *@external https://github.com/xtareq/xtasker
  */
 
 
@@ -228,7 +228,7 @@ async function loadTasks() {
 		showTasks = tasks;
 	}
 	console.log('='.repeat(tw))
-	console.log('||📋TASKER >> ' + BG_COLORS.GREEN + ' ' + group.groupName.toUpperCase() + ' ' + RESET + ' >> Total - ' + tasks.length + ' | 🟡Open - ' + toatalOpen + ' | ✅Done - ' + totalDone + ' ||')
+	console.log('||📋XTASKER >> ' + BG_COLORS.GREEN + ' ' + group.groupName.toUpperCase() + ' ' + RESET + ' >> Total - ' + tasks.length + ' | 🟡Open - ' + toatalOpen + ' | ✅Done - ' + totalDone + ' ||')
 	console.log('-'.repeat(tw))
 	console.log('  ', BOLD + UNDERLINE + 'TaskID' + RESET, '  ' + BOLD + UNDERLINE + 'Description' + RESET)
 	showTasks.forEach(task => {
@@ -261,7 +261,7 @@ async function inputCommand() {
 function displayHelp() {
 	console.clear();
 	console.log('=========================================================')
-	console.log('||📋TASKER >> HELP ||')
+	console.log('||📋XTASKER >> HELP ||')
 	console.log('=========================================================')
 	console.log(COLORS.GREEN + 'COMMANDS:(use command number or alias)' + RESET + '\n\t1.AllTasks \n\t2.OpenTasks | 3.CompletedTasks | 4.AddNew (add:<task>) | 5.Remove (rm:<taskId>) | 6.MarkAsComplete')
 	console.log('For exit write "exit" or "q"')
@@ -274,7 +274,7 @@ async function displayGroups() {
 	groups.sort((a, b) => b.groupId - a.groupId)
 	console.clear();
 	console.log('='.repeat(tw))
-	console.log(`||📋TASKER >> GROUP LIST(${groups.length})`)
+	console.log(`||📋XTASKER >> GROUP LIST(${groups.length})`)
 	console.log('-'.repeat(tw))
 	console.log('  ', BOLD + UNDERLINE + 'GroupID' + RESET, '  ' + BOLD + UNDERLINE + 'Name' + RESET)
 	groups.forEach(task => {
@@ -319,8 +319,6 @@ async function executeCommand(input) {
 				reload()
 			});
 		}
-
-
 	} else if (input == 'h:' || input == 'help:') {
 		displayHelp()
 	} else if (input == 'q' || input == 'exit') {
@@ -386,6 +384,11 @@ async function executeCommand(input) {
 				reload()
 			});
 		})
+	} else if (input.includes('done:')) {
+		const taskId = input.split(":")[1]
+		completeTask(taskId);
+		console.log('Task completed Successfullay.');
+		reload()
 	} else if (input == 6) {
 		rl.question('Enter TaskID: ', (taskId) => {
 			completeTask(taskId);
