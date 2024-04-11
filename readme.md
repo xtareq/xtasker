@@ -1,5 +1,7 @@
-#Xtasker - Cli task management
+# Xtasker - Cli task management
 Xtasker is a very fast and light weight commandline task management tool.
+
+![alt text](https://github.com/xtareq/xtasker/blob/main/screenshots/tasklist.png?raw=true)
 
 ## Installation
 ```sh
