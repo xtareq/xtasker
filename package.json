@@ -1,6 +1,6 @@
 {
   "name": "xtasker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Manage your tasks without leaving your cli.",
   "main": "tasker.js",
   "bin": {
@@ -9,7 +9,7 @@
   "scripts": {
     "test": "jest"
   },
-  "keywords": ["todo","tasker","nodejs","cli"],
+  "keywords": ["tasklist","todo","xtasker","nodejs","cli"],
   "author": "Tareq Hossain",
   "repository":{
     "type":"git",
