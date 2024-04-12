@@ -18,14 +18,23 @@ xtasker
 ## Usages
 
 ### Basic Commands
-- all: // for all task list
-- open: // for open task list
-- done: // for completed task list
-- add: <task_detail> // for add new task
-- rm: <taskId> // for remove task
-- done: <taskId>  // for complete task
-- rmall: // for remove all taskfor current group
-- groups: // display all available groups
-- sw_group: <groupId>  // for switch group
-- add_group: <group_name> //for add new group
-- rm_group: <gorupId> //for remove grop
+<b>Tasks</b>
+- la: - load all tasks
+- lo: - load open tasks
+- ld: - load done tasks
+- at: <task_description> - add new task
+- et: <taskId> - edit task // yet to implemented
+- dt: <taskId> - delete task
+- da: - delete all tasks 
+- mad: <taskId> - mark as done
+
+<b> Groups </b>
+- lg: - load all groups
+- sg: <groupId | groupName> - switch between group by groupId or name
+- ag: <groupName> - add new group
+- dg: <groupId> - delete group by id
+
+<b> Others 
+- cl: - clear window 
+- h: - help menu
+

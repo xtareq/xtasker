@@ -40,11 +40,25 @@ const BOLD = "\u001b[1m";
 const UNDERLINE = "\u001b[4m";
 const RESET = "\x1b[0m";
 
+const cmds = {
+	task_list_all: ['list_all:', 'la:'],
+	task_list_open: ['list_open:', 'lo'],
+	task_list_done: ['list_done:', 'ld'],
+	new_task: ['add_task:', 'at:'],
+	edit_task: ['edit_task:', 'et:'],
+	delete_task: ['delete_task:', 'dt:'],
+	delete_all_task: ['delete_all:', 'dat:'],
+	group_list: ['list_group:', 'lg:'],
+	add_group: ['add_group:', 'ag:'],
+	edit_group: ['edit_group:', 'eg:'],
+	delete_group: ['delete_group:', 'dg:']
+}
+
 // global variables
 let groupId = 1;
 let taskStatus = 'open';
 
-function ensureDbFile() {
+async function ensureDbFile() {
 	if (!fs.existsSync(dbPath)) {
 		fs.mkdirSync(dbPath, 0o777);
 	}
@@ -56,17 +70,19 @@ function ensureDbFile() {
 
 async function initDB() {
 
-	const groupSql = `CREATE TABLE IF NOT EXISTS groups(
-groupId INTEGER PRIMARY KEY AUTOINCREMENT,
-groupName VARCHAR(100) NOT NULL
+	const groupSql = `
+	CREATE TABLE IF NOT EXISTS groups(
+		groupId INTEGER PRIMARY KEY AUTOINCREMENT,
+		groupName VARCHAR(100) NOT NULL
 	)`;
-	const taskSql = `CREATE TABLE IF NOT EXISTS tasks (
-taskId INTEGER PRIMARY KEY AUTOINCREMENT,
-groupId INTEGER NOT NULL DEFAULT 1,
-body TEXT NOT NULL,
-completed INTEGER NOT NULL DEFAULT 0,
-archived INTEGER NOT NULL DEFAULT 0
-)`;
+	const taskSql = `
+	CREATE TABLE IF NOT EXISTS tasks (
+		taskId INTEGER PRIMARY KEY AUTOINCREMENT,
+		groupId INTEGER NOT NULL DEFAULT 1,
+		body TEXT NOT NULL,
+		completed INTEGER NOT NULL DEFAULT 0,
+		archived INTEGER NOT NULL DEFAULT 0
+	)`;
 
 	const isExists = await getGroupDetail(1);
 
@@ -227,9 +243,9 @@ async function loadTasks() {
 	} else {
 		showTasks = tasks;
 	}
-	console.log('='.repeat(tw))
+	console.log('='.repeat(process.stdout.columns))
 	console.log('||📋XTASKER >> ' + BG_COLORS.GREEN + ' ' + group.groupName.toUpperCase() + ' ' + RESET + ' >> Total - ' + tasks.length + ' | 🟡Open - ' + toatalOpen + ' | ✅Done - ' + totalDone + ' ||')
-	console.log('-'.repeat(tw))
+	console.log('-'.repeat(process.stdout.columns))
 	console.log('  ', BOLD + UNDERLINE + 'TaskID' + RESET, '  ' + BOLD + UNDERLINE + 'Description' + RESET)
 	showTasks.forEach(task => {
 		console.log(task.completed == 1 ? '✅' : '🟡', '', task.taskId.toString().padStart(3, "0"), '   ', task.body)
@@ -253,98 +269,127 @@ function reload() {
 
 async function inputCommand() {
 	const group = await getGroupDetail(groupId);
-	rl.question(`${COLORS.PURPLE}${group.groupName.toLowerCase()}${RESET}$ `, (input) => {
+	rl.question(`${COLORS.PURPLE}${group.groupName.toLowerCase()}${RESET}> `, (input) => {
 		executeCommand(input);
 	})
 }
 
 function displayHelp() {
 	console.clear();
-	console.log('=========================================================')
+	console.log('='.repeat(process.stdout.columns))
 	console.log('||📋XTASKER >> HELP ||')
-	console.log('=========================================================')
-	console.log(COLORS.GREEN + 'COMMANDS:(use command number or alias)' + RESET + '\n\t1.AllTasks \n\t2.OpenTasks | 3.CompletedTasks | 4.AddNew (add:<task>) | 5.Remove (rm:<taskId>) | 6.MarkAsComplete')
-	console.log('For exit write "exit" or "q"')
+	console.log('-'.repeat(process.stdout.columns))
+	console.log(COLORS.GREEN + 'BASIC COMMANDS:' + RESET);
+	console.log('===Tasks===')
+	console.log('1. la : - display all tasks')
+	console.log('2. lo : - display open tasks')
+	console.log('3. ld : - display done tasks')
+	console.log('4. at : - add new task ')
+	console.log('5. et : <taskId> - edit task')
+	console.log('6. dt : <taskId> - task to delete')
+	console.log('7. da : delete all tasks')
+	console.log('8. mad: <taskId> - mark as done')
+	console.log('')
+	console.log('===Groups===')
+	console.log('9.  lg : - display all groups')
+	console.log('10. sg : <groupId> - switch between groups')
+	console.log('11. ng : <groupName> - add new group ')
+	console.log('12. eg : <groupId> - edit group')
+	console.log('13. xg : <groupId> - delete group')
+	console.log('')
+	console.log('===Others===')
+	console.log('14. cl : - clear screen')
+	console.log('15.  q : - quit')
+	console.log('')
+
 	inputCommand();
 }
 
 async function displayGroups() {
 	const groups = await getAllGroups();
-
 	groups.sort((a, b) => b.groupId - a.groupId)
 	console.clear();
-	console.log('='.repeat(tw))
+	console.log('='.repeat(process.stdout.columns))
 	console.log(`||📋XTASKER >> GROUP LIST(${groups.length})`)
-	console.log('-'.repeat(tw))
+	console.log('-'.repeat(process.stdout.columns))
 	console.log('  ', BOLD + UNDERLINE + 'GroupID' + RESET, '  ' + BOLD + UNDERLINE + 'Name' + RESET)
 	groups.forEach(task => {
-		console.log('🟡', '', task.groupId.toString().padStart(3, "0"), '   ', task.groupName)
+		console.log('📒', '', task.groupId.toString().padStart(3, "0"), '   ', task.groupName)
 	})
 	console.log('')
 	inputCommand();
 }
 
+/**
+ * execute command
+ * @param {input} input 
+ * @returns mix
+ * */
 async function executeCommand(input) {
-	if (input == 'groups:' || input == 7) {
+	const cmdline = input.split(':');
+	if (cmdline.length < 2) {
+		console.log(COLORS.RED + '🛑ERROR: missing colon(:) at the end of command eg ' + input + ':' + RESET);
+		inputCommand();
+		return;
+	}
+
+	const cmd = cmdline[0].trim();
+	const args = cmdline[1].trim();
+
+	if (['list_group', 'lg'].includes(cmd)) {
 		displayGroups();
-	} else if (input.includes('add_group:')) {
-		const groupName = input.split(':')[1];
-		addNewGroup(groupName.trim(' '));
-		executeCommand(7);
-	} else if (input.includes('sw_group:') || input.includes('sw:')) {
-
-		const gId = input.split(':')[1];
-		const groupDetail = await getGroupDetail(gId);
+	} else if (['add_group', 'ag'].includes(cmd)) {
+		addNewGroup(args);
+		displayGroups();
+	} else if (cmd == 'sg') {
+		const groupDetail = await getGroupDetail(args);
 		if (groupDetail) {
-			groupId = parseInt(gId);
+			groupId = parseInt(args);
+			main();
 		} else {
-			console.log('group not found')
+			console.log(COLORS.RED + 'ERROR: group not found by id ' + args + RESET)
+			inputCommand()
 		}
-		main();
-	} else if (input.includes('rm_group:')) {
-		const gId = input.split(":")[1];
-
-		if (gId == 1) {
+	} else if (['delete_group', 'dg'].includes(cmd)) {
+		if (args == 1) {
 			console.log(`${COLORS.RED} ERROR: Default group can\'t be deleted.${RESET}`);
-			setTimeout(() => {
-				reload();
-			}, 1500)
+			inputCommand();
 		} else {
-			rl.question(`Are you sure you want to delete this group with ID ${groupId} and all its tasks? (y/n): `, (answer) => {
+			rl.question(`Are you sure you want to delete this group with ID ${args} and all its tasks? (y/n): `, (answer) => {
 				if (answer.toLowerCase() === 'yes' || answer.toLowerCase() == 'y') {
-					removeGroup(gId);
+					removeGroup(args);
 					groupId = 1;
 					console.log('Group removed Successfullay.');
 				}
 				reload()
 			});
 		}
-	} else if (input == 'h:' || input == 'help:') {
+	} else if (['h', 'help'].includes(cmd)) {
 		displayHelp()
-	} else if (input == 'q' || input == 'exit') {
+	} else if (['q', 'quit', 'exit'].includes(cmd)) {
 		db.close();
 		rl.close();
-	} else if (input == 1) {
+	} else if (cmd == 'la') {
 		console.clear();
 		taskStatus = 'all';
 		main();
-	} else if (input == 2) {
+	} else if (cmd == 'lo') {
 		console.clear();
 		taskStatus = 'open';
 		main();
-	} else if (input == 3) {
+	} else if (cmd == 'ld') {
 		taskStatus = 'done';
 		console.clear();
 		main();
-	} else if (input.includes("add:")) {
-		const task = input.split(':')[1];
-		if (task.length > 2) {
-			addNewTask({ body: task.trim(' '), groupId })
+	} else if (['add', 'at'].includes(cmd)) {
+		if (args.length > 2) {
+			addNewTask({ body: args, groupId })
 			console.log('Task Added Successfullay.');
+			reload();
 		} else {
-			console.log('Task description can\'t be empty')
+			console.log(COLORS.RED + 'ERROR: Task description can\'t be empty' + RESET);
+			inputCommand();
 		}
-		reload()
 	} else if (input == 4) {
 		rl.question('Task description: ', (newTask) => {
 			if (newTask.length < 1) {
@@ -355,7 +400,7 @@ async function executeCommand(input) {
 			}
 			reload()
 		})
-	} else if (input.includes('rmall:')) {
+	} else if (cmd == 'da') {
 
 		rl.question(`Are you sure? (y/n): `, (answer) => {
 			if (answer.toLowerCase() === 'yes' || answer.toLowerCase() == 'y') {
@@ -364,12 +409,10 @@ async function executeCommand(input) {
 			}
 			reload()
 		});
-	} else if (input.includes('rm:')) {
-		const taskId = input.split(":")[1]
-
-		rl.question(`Are you sure you want to delete task with ID ${taskId}? (y/n): `, (answer) => {
+	} else if (cmd == 'dt') {
+		rl.question(`Are you sure you want to delete task with ID ${args}? (y/n): `, (answer) => {
 			if (answer.toLowerCase() === 'yes' || answer.toLowerCase() == 'y') {
-				removeTask(taskId);
+				removeTask(args);
 				console.log('Task removed Successfullay.');
 			}
 			reload()
@@ -384,9 +427,8 @@ async function executeCommand(input) {
 				reload()
 			});
 		})
-	} else if (input.includes('done:')) {
-		const taskId = input.split(":")[1]
-		completeTask(taskId);
+	} else if (cmd == 'mad') {
+		completeTask(args);
 		console.log('Task completed Successfullay.');
 		reload()
 	} else if (input == 6) {
@@ -395,14 +437,17 @@ async function executeCommand(input) {
 			console.log('Task completed Successfullay.');
 			reload()
 		})
+	} else if (['clear', 'cls'].includes(cmd)) {
+		reload();
 	} else {
-		console.clear();
-		main('❗ERROR: Unknown command!', true)
+		console.log(COLORS.RED + '❗ERROR: Unknown command' + RESET)
+		console.log('Hint: use h: or help: for available commands')
+		inputCommand()
 	}
 }
 
 async function main(message = null, error = false) {
-	ensureDbFile();
+	await ensureDbFile();
 	await initDB();
 	console.clear();
 	if (message) {
@@ -411,7 +456,7 @@ async function main(message = null, error = false) {
 	if (!error) {
 		await loadTasks();
 	}
-	inputCommand()
+	await inputCommand()
 	//db.close();
 }
 
