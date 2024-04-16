@@ -1,5 +1,3 @@
-## WARNING:: it's not production ready yet. you may face bugs and crashes along the way
-
 # Xtasker - Cli task management
 Xtasker is a simple and liteweight commandline task management tool.
 
@@ -7,8 +5,9 @@ Xtasker is a simple and liteweight commandline task management tool.
 
 ## Installation
 ```sh
-npm i -g xtasker
-
+npm i -g xtasker 
+# pnpm add -g xtasker
+# yarn add -g xtasker
 ```
 Note: After installtaion restart your terminal and run
 ```sh
@@ -19,22 +18,22 @@ xtasker
 
 ### Basic Commands
 <b>Tasks</b>
-- la: - load all tasks
-- lo: - load open tasks
-- ld: - load done tasks
-- at: <task_description> - add new task
-- et: <taskId> - edit task // yet to implemented
-- dt: <taskId> - delete task
-- da: - delete all tasks 
-- mad: <taskId> - mark as done
+- la: - Load all tasks
+- lo: - Load open tasks
+- ld: - Load done tasks
+- at: <task_description> - Add new task
+- et: <taskId> - Edit task
+- dt: <taskId> - Delete task
+- da: - Delete all tasks 
+- mad: <taskId> - Mark as done
 
 <b> Groups </b>
-- lg: - load all groups
-- sg: <groupId | groupName> - switch between group by groupId or name
-- ag: <groupName> - add new group
-- dg: <groupId> - delete group by id
+- lg: - Load all groups
+- sg: <groupId> - Switch group by groupId
+- ag: <groupName> - Add new group
+- dg: <groupId> - Delete group by id
 
 <b> Others 
-- cl: - clear window 
-- h: - help menu
+- cl: - Clear window 
+- h: - Help menu
 

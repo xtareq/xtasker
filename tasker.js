@@ -122,6 +122,25 @@ function getAllTasks(groupId) {
 
 }
 
+function getTaskById(taskId) {
+	return new Promise((resolve, reject) => {
+		const tasks = [];
+		db.serialize(() => {
+			db.each(`SELECT * FROM tasks WHERE taskId='${taskId}'`, (err, row) => {
+				if (err) {
+					console.log(err);
+					reject(err);
+					return;
+				}
+				tasks.push(row);
+			}, () => {
+				resolve(tasks[0]);
+			});
+		});
+	});
+
+}
+
 function getAllGroups() {
 	return new Promise((resolve, reject) => {
 		const groups = [];
@@ -224,7 +243,17 @@ function completeTask(id) {
 	});
 }
 
-
+async function updateTask(taskId, body) {
+	const sql = 'UPDATE tasks SET body = ? WHERE taskId = ?';
+	// should impletment edit ui
+	db.run(sql, [body, taskId], function(err) {
+		if (err) {
+			console.error(err.message);
+			return;
+		}
+		console.log(`Task with ID ${taskId} has been updated.`);
+	});
+}
 async function loadTasks() {
 	let showTasks = [];
 	const group = await getGroupDetail(groupId);
@@ -390,16 +419,29 @@ async function executeCommand(input) {
 			console.log(COLORS.RED + 'ERROR: Task description can\'t be empty' + RESET);
 			inputCommand();
 		}
-	} else if (input == 4) {
-		rl.question('Task description: ', (newTask) => {
-			if (newTask.length < 1) {
-				console.log('Task description can\'t be empty')
-			} else {
-				addNewTask({ body: newTask });
-				console.log('Task Added Successfullay.');
-			}
-			reload()
-		})
+	} else if (cmd == 'et') {
+		const task = await getTaskById(args);
+		if (!task) {
+			console.log(COLORS.RED + '❗ERROR: No task found by ID:  ' + args + RESET)
+			inputCommand();
+
+		} else if (task.completed) {
+			console.log(COLORS.RED + '❗ERROR: Can\'t edit completed task ' + RESET)
+			inputCommand();
+		} else {
+			rl.question(`> `, (ans) => {
+
+				rl.question(`Are you sure to update task with ID: ${args}? (y/n): `, (answer) => {
+					if (answer.toLowerCase() === 'yes' || answer.toLowerCase() == 'y') {
+						updateTask(args, ans)
+						console.log('Task Updated Successfullay.');
+					}
+					reload()
+				});
+			})
+			rl.write(task.body)
+		}
+
 	} else if (cmd == 'da') {
 
 		rl.question(`Are you sure? (y/n): `, (answer) => {
@@ -417,27 +459,11 @@ async function executeCommand(input) {
 			}
 			reload()
 		});
-	} else if (input == 5) {
-		rl.question('Enter TaskID: ', (taskId) => {
-			rl.question(`Are you sure you want to delete task with ID ${taskId}? (y/n): `, (answer) => {
-				if (answer.toLowerCase() === 'yes' || answer.toLowerCase() == 'y') {
-					removeTask(taskId);
-					console.log('Task removed Successfullay.');
-				}
-				reload()
-			});
-		})
 	} else if (cmd == 'mad') {
 		completeTask(args);
 		console.log('Task completed Successfullay.');
 		reload()
-	} else if (input == 6) {
-		rl.question('Enter TaskID: ', (taskId) => {
-			completeTask(taskId);
-			console.log('Task completed Successfullay.');
-			reload()
-		})
-	} else if (['clear', 'cls'].includes(cmd)) {
+	} else if (['clear', 'cls', 'cl'].includes(cmd)) {
 		reload();
 	} else {
 		console.log(COLORS.RED + '❗ERROR: Unknown command' + RESET)
